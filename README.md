@@ -15,7 +15,7 @@ To compile and run the MazeFinder-GeneticAlgorithm on your local machine:
 
 1. **Clone the repository:**
 ```bash
-git clone https://github.com/your-username/MazeFinder-GeneticAlgorithm.git
+git clone https://github.com/brettadams0/MazeFinder-GeneticAlgorithm.git
 ```
 Navigate to the project directory:
 ```bash
