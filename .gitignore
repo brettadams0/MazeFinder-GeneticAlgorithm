@@ -1,0 +1,15 @@
+*.o
+*.obj
+*.exe
+*.out
+*.a
+*.so
+*.dll
+*.dylib
+build/
+cmake-build-*/
+CMakeCache.txt
+CMakeFiles/
+.vs/
+.idea/
+.DS_Store
