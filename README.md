@@ -1,43 +1,49 @@
 # MazeFinder-GeneticAlgorithm
 
-MazeFinder-GeneticAlgorithm is a C++ application that uses a genetic algorithm to solve mazes of size 20x20. This project demonstrates the use of evolutionary techniques to find optimal paths through mazes, leveraging multi-threading for improved performance.
+A genetic algorithm in C++ that evolves a route across a 20x20 grid, with fitness evaluated in
+parallel on a hand-rolled thread pool.
 
-## Features
+A genome is a fixed 100-move sequence over `{UP, DOWN, LEFT, RIGHT, STAND}`. Each generation walks
+every genome from the top-left corner, scores where it ended up, keeps the better half, and refills
+the population by crossing and mutating the survivors. It runs 1000 generations over a population
+of 100.
 
-- **Genetic Algorithm:** Implements a genetic algorithm to evolve sequences of moves (genomes) that navigate through mazes.
-- **Thread Pool:** Utilizes a custom thread pool for parallel evaluation of genome fitness, achieving significant speed improvements.
-- **Dynamic Mutation and Crossover:** Includes mechanisms for genome mutation and crossover to explore and exploit potential solutions.
-- **Maze Representation:** Uses a 2D vector to represent maze structures, enabling customizable maze configurations.
+The interesting part is the thread pool rather than the GA: fitness evaluation is the only
+parallelisable stage, so each generation enqueues 100 independent tasks across 4 workers and blocks
+on their futures before selection.
 
-## Getting Started
+## Building and running
 
-To compile and run the MazeFinder-GeneticAlgorithm on your local machine:
+Needs a C++11 compiler and pthreads.
 
-1. **Clone the repository:**
-```bash
-git clone https://github.com/brettadams0/MazeFinder-GeneticAlgorithm.git
+```sh
+g++ -std=c++11 -pthread MazeFinder.cpp -o mazefinder
+./mazefinder
 ```
-Navigate to the project directory:
-```bash
-cd MazeFinder-GeneticAlgorithm
-```
-Compile the code:
 
-Ensure you have a C++ compiler that supports C++11 and the pthread library.
-```bash
-  g++ -std=c++11 -pthread main.cpp -o main
-```
-Run the executable:
-```bash
-  ./main
-```
-## Usage
+It prints the initial population, then per generation the fitness vector and the selected genomes.
+That is a lot of output — pipe it somewhere if you want to read it.
 
-Upon running the program, it will generate an initial population of genomes.
-Each generation evaluates genome fitness based on its ability to navigate through the maze.
-Top-performing genomes are selected for crossover and mutation to form the next generation.
-The process repeats for a specified number of generations, optimizing the pathfinding solution.
+## Tunables
 
-## Contributing
+All compile-time constants at the top of `MazeFinder.cpp`:
 
-Contributions are welcome! Please fork the repository and create a pull request with your improvements. For major changes, please open an issue first to discuss what you would like to change.
+| | |
+|---|---|
+| `MAZE_SIZE` | `20` |
+| `POPULATION_SIZE` | `100` |
+| `GENERATIONS` | `1000` |
+| `THREAD_COUNT` | `4` |
+| `GENOME_LENGTH` | `100` |
+
+## Honest scope
+
+The grid is allocated as all zeroes and nothing ever writes a wall into it, so what the population
+actually solves is "reach the bottom-right corner of an open field" — fitness is Manhattan distance
+to that corner. The maze is a `vector<vector<int>>` and `evaluateFitness` already receives it, so
+adding real obstacles is the natural next step; as it stands the pathfinding is easier than the name
+suggests. The thread pool and the evolutionary loop are the parts doing real work.
+
+## License
+
+MIT — see [LICENSE](LICENSE).
