@@ -34,6 +34,12 @@ without code changes.
 `tools/gen_mazes.py` generated them with fixed seeds. They are committed as text, not generated at run
 time.
 
+The core can also generate a maze of any size from a seed (`generateMaze` in `src/maze.cpp`): a recursive
+backtracker over the even cells, and with `--loops`, 16% of the remaining inner walls knocked out so
+several routes exist. It uses the same seeded generator as the GA, so a size and a seed give the same
+maze natively and in WebAssembly. `optimalPath` returns one shortest route by following the BFS
+distances.
+
 ## Building and running
 
 Needs a C++11 compiler and pthreads.
@@ -42,9 +48,11 @@ Needs a C++11 compiler and pthreads.
 make                     # build/mazefinder
 ./build/mazefinder --maze mazes/maze.txt --seed 1
 make test                # unit tests (plain asserts)
+./build/mazefinder --size 30 --loops --seed 4 --generations 1500   # a generated maze
+./build/mazefinder --generate 30 --loops --seed 4                   # print it
 ```
 
-Options: `--maze FILE` (default `mazes/open.txt`), `--seed N`, `--generations N`, `--every N` (print
+Options: `--maze FILE` (default `mazes/open.txt`) or `--size N [--loops]`, `--seed N`, `--generations N`, `--every N` (print
 the best fitness every N generations, default 100), `--population N`, `--threads N` (default 4), and
 `--verbose` (every fitness value, and the best route as `UDLRS` letters).
 
@@ -52,11 +60,12 @@ the best fitness every N generations, default 100), `--population N`, `--threads
 
 ```sh
 make wasm                # web/mazefinder.js and web/mazefinder.wasm (needs Emscripten 6.0.13, em++)
-make determinism         # native and WASM give the same best fitness per maze and seed
+make determinism         # native and WASM: same best fitness per maze and seed, same generated mazes
 ```
 
 `src/wasm_api.cpp` exposes a small C API (`mf_create`, `mf_step`, `mf_best_fitness`,
-`mf_reached_goal`, and views of the maze and of every walked path, fittest first). The built `.js`
+`mf_reached_goal`, `mf_generate`, `mf_optimal_path`, and views of the maze and of every walked path, fittest
+first). The built `.js`
 and `.wasm` are committed so a static site can copy them. Thread pool: native build only. WASM
 threads need `SharedArrayBuffer`, which needs COOP/COEP headers that GitHub Pages can't send, so the
 browser build scores fitness on one thread.
@@ -65,7 +74,8 @@ browser build scores fitness on one thread.
 
 | | |
 |---|---|
-| `src/maze.{h,cpp}` | load, validate, BFS distances |
+| `src/maze.{h,cpp}` | load, validate, BFS distances, generate, optimal path |
+| `src/rng.h` | the seeded splitmix64 generator |
 | `src/ga.{h,cpp}` | genome, walk, fitness, selection, crossover, mutation, seeded RNG (no threads, no I/O) |
 | `src/main.cpp` | native CLI and its thread pool |
 | `src/wasm_api.cpp` | the C API for the browser build |

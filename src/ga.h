@@ -7,21 +7,11 @@
 #include <vector>
 
 #include "maze.h"
+#include "rng.h"
 
 enum Direction { UP, DOWN, LEFT, RIGHT, STAND };
 using Genome = std::vector<Direction>;
 
-// splitmix64, with ranges mapped by hand: std::uniform_int_distribution
-// returns different numbers under libstdc++ and libc++, and the browser build
-// must replay the native one exactly.
-class Rng {
-public:
-    explicit Rng(uint64_t seed) : state(seed) {}
-    uint64_t next();
-    int below(int n) { return static_cast<int>(next() % static_cast<uint64_t>(n)); }
-private:
-    uint64_t state;
-};
 
 struct Walk {
     int x = 0, y = 0;

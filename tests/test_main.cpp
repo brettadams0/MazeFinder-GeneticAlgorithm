@@ -1,6 +1,7 @@
 // Plain-assert tests for the core. Build and run with `make test`.
 #undef NDEBUG
 #include <cassert>
+#include <cstdlib>
 #include <iostream>
 #include <string>
 
@@ -72,6 +73,28 @@ int main() {
         assert(loadMaze(std::string("mazes/") + name + ".txt", s, error));
         assert(genomeLengthFor(s) * 2 >= s.shortestPath() * 3);
     }
+
+    // Generated mazes: the same seed gives the same maze, every one is solvable, and the
+    // optimal path is a chain of open, adjacent cells as long as the BFS distance.
+    for (int n : {5, 9, 20, 21, 30, 40}) {
+        for (bool loops : {false, true}) {
+            const std::string text = generateMaze(n, 7, loops);
+            assert(text == generateMaze(n, 7, loops));
+            assert(text != generateMaze(n, 8, loops));
+            Maze g = parse(text);
+            assert(g.width == n && g.height == n);
+            const auto opt = optimalPath(g);
+            assert(static_cast<int>(opt.size()) == g.shortestPath() + 1);
+            assert(opt.front() == std::make_pair(0, 0) && opt.back() == std::make_pair(n - 1, n - 1));
+            for (size_t i = 1; i < opt.size(); ++i) {
+                assert(!g.wall(opt[i].first, opt[i].second));
+                assert(std::abs(opt[i].first - opt[i - 1].first) + std::abs(opt[i].second - opt[i - 1].second) == 1);
+            }
+        }
+        // loops add routes: never longer than the one-route maze from the same seed
+        assert(parse(generateMaze(n, 7, true)).shortestPath() <= parse(generateMaze(n, 7, false)).shortestPath());
+    }
+    assert(optimalPath(parse("...\n.#.\n...\n")).size() == 5);
 
     std::cout << "all tests passed\n";
     return 0;

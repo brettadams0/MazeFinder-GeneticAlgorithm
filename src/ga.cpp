@@ -3,13 +3,6 @@
 #include <algorithm>
 #include <numeric>
 
-uint64_t Rng::next() {
-    uint64_t z = (state += 0x9E3779B97F4A7C15ULL);
-    z = (z ^ (z >> 30)) * 0xBF58476D1CE4E5B9ULL;
-    z = (z ^ (z >> 27)) * 0x94D049BB133111EBULL;
-    return z ^ (z >> 31);
-}
-
 Walk walk(const Genome& genome, const Maze& maze, std::vector<std::pair<int, int>>* path) {
     Walk w;
     const int gx = maze.width - 1, gy = maze.height - 1;
