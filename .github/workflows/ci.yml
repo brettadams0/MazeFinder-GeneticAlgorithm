@@ -1,0 +1,47 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  native:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Build (g++, -Wall -Wextra -Werror)
+        run: make
+
+      - name: Tests
+        run: make test
+
+      - name: Run each maze for a few generations
+        run: for m in mazes/*.txt; do ./build/mazefinder --maze "$m" --generations 50 --every 25; done
+
+  wasm:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: mymindstorm/setup-emsdk@v16
+        with:
+          version: 6.0.13
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22.x
+
+      - name: Native and WASM agree for the same seed
+        run: make determinism
+
+      # The committed web/ build must be what this source compiles to.
+      - name: Committed web/ build is current
+        run: |
+          make -B wasm
+          git diff --exit-code -- web/
