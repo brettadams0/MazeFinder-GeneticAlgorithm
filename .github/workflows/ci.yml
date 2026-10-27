@@ -22,7 +22,9 @@ jobs:
         run: make test
 
       - name: Run each maze for a few generations
-        run: for m in mazes/*.txt; do ./build/mazefinder --maze "$m" --generations 50 --every 25; done
+        run: |
+          for m in mazes/*.txt; do ./build/mazefinder --maze "$m" --generations 50 --every 25; done
+          for n in 20 30 40; do ./build/mazefinder --size $n --loops --seed 1 --generations 50 --every 25; done
 
   wasm:
     runs-on: ubuntu-latest

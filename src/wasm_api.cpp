@@ -17,6 +17,8 @@ std::string error;
 std::vector<uint8_t> cells;
 std::vector<int16_t> paths;     // population x (genome length + 1) x (x, y), fittest first
 std::vector<int32_t> lengths;   // points in each path, same order
+std::string generated;
+std::vector<int16_t> optimal;   // one shortest route, (x, y) pairs
 
 void refresh() {
     const Maze& m = pop->maze();
@@ -47,6 +49,8 @@ int mf_create(const char* mazeText, uint32_t seed) {
     if (!parseMaze(mazeText ? mazeText : "", m, error)) { pop.reset(); return 1; }
     error.clear();
     pop.reset(new Population(m, seed));
+    optimal.clear();
+    for (const auto& p : optimalPath(m)) { optimal.push_back(static_cast<int16_t>(p.first)); optimal.push_back(static_cast<int16_t>(p.second)); }
     cells.clear();
     for (const auto& row : m.cells)
         for (int c : row) cells.push_back(static_cast<uint8_t>(c));
@@ -55,6 +59,12 @@ int mf_create(const char* mazeText, uint32_t seed) {
 }
 
 const char* mf_error() { return error.c_str(); }
+
+// A generated n x n maze as text, for mf_create; the same as `mazefinder --generate n --seed s [--loops]`.
+const char* mf_generate(int n, uint32_t seed, int loops) {
+    generated = generateMaze(n, seed, loops != 0);
+    return generated.c_str();
+}
 
 void mf_step(int generations) {
     if (!pop) return;
@@ -73,5 +83,7 @@ int mf_population_size() { return pop ? static_cast<int>(pop->genomes().size()) 
 const uint8_t* mf_cells() { return cells.data(); }
 const int16_t* mf_paths() { return paths.data(); }
 const int32_t* mf_path_lengths() { return lengths.data(); }
+int mf_optimal_length() { return static_cast<int>(optimal.size() / 2); }  // points, start and goal included
+const int16_t* mf_optimal_path() { return optimal.data(); }
 
 }

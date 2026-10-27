@@ -80,8 +80,9 @@ static void printGenome(const Genome& genome, int moves) {
 }
 
 static void usage() {
-    std::cerr << "usage: mazefinder [--maze FILE] [--seed N] [--generations N] [--every N]\n"
-                 "                  [--population N] [--threads N] [--verbose]\n";
+    std::cerr << "usage: mazefinder [--maze FILE | --size N [--loops]] [--seed N] [--generations N]\n"
+                 "                  [--every N] [--population N] [--threads N] [--verbose]\n"
+                 "       mazefinder --generate N [--loops] [--seed N]   (print a generated maze)\n";
     std::exit(2);
 }
 
@@ -89,7 +90,8 @@ int main(int argc, char** argv) {
     std::string mazePath = "mazes/open.txt";
     unsigned long long seed = 1;
     int generations = 1000, every = 100, populationSize = 100, threads = 4;
-    bool verbose = false;
+    bool verbose = false, loops = false;
+    int generate = 0, size = 0;
     for (int i = 1; i < argc; ++i) {
         const char* a = argv[i];
         auto value = [&]() -> const char* { if (i + 1 >= argc) usage(); return argv[++i]; };
@@ -100,13 +102,24 @@ int main(int argc, char** argv) {
         else if (!std::strcmp(a, "--population")) populationSize = std::atoi(value());
         else if (!std::strcmp(a, "--threads")) threads = std::atoi(value());
         else if (!std::strcmp(a, "--verbose")) verbose = true;
+        else if (!std::strcmp(a, "--generate")) generate = std::atoi(value());
+        else if (!std::strcmp(a, "--size")) size = std::atoi(value());
+        else if (!std::strcmp(a, "--loops")) loops = true;
         else usage();
     }
     if (generations < 0 || every < 1 || populationSize < 2 || threads < 1) usage();
 
+    if (generate) { std::cout << generateMaze(generate, seed, loops); return 0; }
+
     Maze maze;
     std::string error;
-    if (!loadMaze(mazePath, maze, error)) { std::cerr << "mazefinder: " << error << '\n'; return 1; }
+    if (size) {
+        mazePath = "generated " + std::to_string(size) + (loops ? " with loops" : "");
+        if (!parseMaze(generateMaze(size, seed, loops), maze, error)) { std::cerr << "mazefinder: " << error << '\n'; return 1; }
+    } else if (!loadMaze(mazePath, maze, error)) {
+        std::cerr << "mazefinder: " << error << '\n';
+        return 1;
+    }
 
     ThreadPool pool(threads);
     Evaluator parallel = [&pool](const std::vector<Genome>& population, const Maze& m, std::vector<int>& fitness) {
