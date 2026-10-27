@@ -51,7 +51,7 @@ the best fitness every N generations, default 100), `--population N`, `--threads
 ## WebAssembly
 
 ```sh
-make wasm                # web/mazefinder.js and web/mazefinder.wasm (needs emcc)
+make wasm                # web/mazefinder.js and web/mazefinder.wasm (needs Emscripten 6.0.13, em++)
 make determinism         # native and WASM give the same best fitness per maze and seed
 ```
 

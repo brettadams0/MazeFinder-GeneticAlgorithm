@@ -13,7 +13,7 @@ jobs:
   native:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       - name: Build (g++, -Wall -Wextra -Werror)
         run: make
@@ -27,15 +27,15 @@ jobs:
   wasm:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
-      - uses: mymindstorm/setup-emsdk@v14
+      - uses: mymindstorm/setup-emsdk@v16
         with:
-          version: @@EMSDK@@
+          version: 6.0.13
 
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v7
         with:
-          node-version: 20.x
+          node-version: 22.x
 
       - name: Native and WASM agree for the same seed
         run: make determinism
