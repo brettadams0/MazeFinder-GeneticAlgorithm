@@ -70,6 +70,7 @@ private:
     std::vector<int> fitness_;
     std::vector<int> order_;  // genome indices, fittest first
     int generation_ = 0;
+    int stagnant_ = 0;  // generations without a strictly better best fitness
 };
 
 #endif

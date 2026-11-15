@@ -61,21 +61,40 @@ Genome Population::crossover(const Genome& a, const Genome& b) {
     return child;
 }
 
-// One change per child: replace a move, or delete one (appending a random
-// move) or insert one (dropping the last). The shifts matter with walls: a
-// replaced move re-routes everything after it, while deleting a wasted move
-// keeps the route and frees a move at the end.
+// Each child receives a replacement, deletion, insertion, or BFS-guided segment
+// mutation. Single-move edits can get trapped in a longer corridor; the guided
+// segment grows after a plateau so crossover can discover a different route.
 void Population::mutate(Genome& g) {
-    const int kind = rng_.below(3), point = rng_.below(length_);
+    const int kind = rng_.below(4), point = rng_.below(length_);
     const Direction d = static_cast<Direction>(rng_.below(5));
     if (kind == 0) {
         g[point] = d;
     } else if (kind == 1) {
         g.erase(g.begin() + point);
         g.push_back(d);
-    } else {
+    } else if (kind == 2) {
         g.insert(g.begin() + point, d);
         g.pop_back();
+    } else {
+        // Reuse the BFS distance field that already scores fitness. Start with 2-8
+        // legal downhill moves; expand up to a full genome after prolonged stagnation.
+        // The seeded RNG chooses the prefix, segment length and equally good moves.
+        const Walk prefix = walk(Genome(g.begin(), g.begin() + point), maze_);
+        int x = prefix.x, y = prefix.y;
+        const int dx[] = {0, 0, -1, 1}, dy[] = {-1, 1, 0, 0};
+        const int span = std::min(length_, 8 + stagnant_ / 2);
+        const int end = std::min(length_, point + 2 + rng_.below(span - 1));
+        for (int i = point; i < end; ++i) {
+            int options[4], count = 0;
+            for (int move = 0; move < 4; ++move) {
+                const int nx = x + dx[move], ny = y + dy[move];
+                if (!maze_.wall(nx, ny) && maze_.dist[ny][nx] < maze_.dist[y][x]) options[count++] = move;
+            }
+            if (!count) break;
+            const int move = options[rng_.below(count)];
+            g[i] = static_cast<Direction>(move);
+            x += dx[move]; y += dy[move];
+        }
     }
 }
 
@@ -86,6 +105,7 @@ void Population::score() {
 }
 
 void Population::step() {
+    const int previousBest = bestFitness();
     const int half = static_cast<int>(genomes_.size()) / 2;
     std::vector<Genome> next;
     next.reserve(genomes_.size());
@@ -99,6 +119,7 @@ void Population::step() {
     while (next.size() < genomes_.size()) next.push_back(randomGenome());  // odd sizes
     genomes_ = std::move(next);
     score();
+    stagnant_ = bestFitness() < previousBest ? 0 : stagnant_ + 1;
     generation_++;
 }
 
