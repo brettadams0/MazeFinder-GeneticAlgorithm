@@ -8,7 +8,12 @@ A genome is a fixed-length sequence of moves over `{UP, DOWN, LEFT, RIGHT, STAND
 walks every genome from the top-left corner. A move into a wall or off the edge is blocked (the walker
 stays put), and the walk stops at the bottom-right goal. The population keeps its better half and
 refills it with one crossover child per survivor, each with one mutation: a replaced move, a deleted
-move (a random one appended) or an inserted move (the last dropped).
+move (a random one appended), an inserted move (the last dropped), or a BFS-guided segment.
+The guided mutation rewrites 2–8 moves along decreasing BFS distance, choosing ties with the seeded
+RNG. Its maximum span grows by one move per two generations without improvement, capped at the
+genome length. This lets a population escape a longer corridor after single-move mutations plateau.
+This is a hybrid genetic search: BFS guides both fitness and some mutations, not just the displayed
+optimal-route baseline. A finite generation budget still does not guarantee convergence.
 
 - **Fitness** (lower is better): the breadth-first-search distance from the walker's final cell to the
   goal, times (genome length + 1), plus the moves used. A walk that reaches the goal scores its move

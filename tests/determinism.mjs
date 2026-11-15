@@ -39,4 +39,17 @@ for (const [size, loops] of [[20, 0], [20, 1], [30, 0], [30, 1], [40, 1]]) {
     console.log(`${ok ? 'ok  ' : 'FAIL'} generated ${size}${loops ? ' loops' : ''} seed ${seed}: maze text ${text === nativeText ? 'same' : 'DIFFERS'}, native ${native}, wasm ${wasm}`);
   }
 }
+// The plateau fix must also converge in the published WASM engine, and agree with
+// native evolution after the adaptive mutation has had time to expand.
+for (const seed of [18, 24, 45, 56, 2147483647]) {
+  const text = generate(40, seed, 1);
+  if (create(text, seed) !== 0) throw new Error(mf.UTF8ToString(mf._mf_error()));
+  mf._mf_step(1500);
+  const out = execFileSync('./build/mazefinder', ['--size', '40', '--loops', '--seed', String(seed),
+    '--generations', '1500', '--every', '1500', '--threads', '1'], { encoding: 'utf8' });
+  const native = Number(out.match(/generation 1500 best (\d+)/)[1]);
+  const ok = native === mf._mf_best_fitness() && native === mf._mf_shortest_path();
+  if (!ok) failed++;
+  console.log(`${ok ? 'ok  ' : 'FAIL'} plateau seed ${seed}: native ${native}, wasm ${mf._mf_best_fitness()}, optimal ${mf._mf_shortest_path()}`);
+}
 process.exit(failed ? 1 : 0);

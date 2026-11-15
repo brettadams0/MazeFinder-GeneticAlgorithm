@@ -96,6 +96,22 @@ int main() {
     }
     assert(optimalPath(parse("...\n.#.\n...\n")).size() == 5);
 
+    // Longer valid corridors used to trap single-move mutations indefinitely on these
+    // 40x40 loop seeds (e.g. seed 18 stayed at 94 vs optimal 90 even at 10k generations).
+    for (uint64_t seed : {7ULL, 18ULL, 24ULL, 27ULL, 35ULL, 39ULL, 40ULL, 45ULL, 56ULL,
+                          43ULL, 87ULL, 2147483647ULL}) {
+        Maze large = parse(generateMaze(40, seed, true));
+        Population search(large, seed);
+        int previous = search.bestFitness();
+        while (search.generation() < 1500 && search.bestFitness() != large.shortestPath()) {
+            search.step();
+            assert(search.bestFitness() <= previous);
+            previous = search.bestFitness();
+        }
+        const Walk route = walk(search.genomes()[search.best()], large);
+        assert(route.reached && route.moves == large.shortestPath());
+    }
+
     std::cout << "all tests passed\n";
     return 0;
 }
