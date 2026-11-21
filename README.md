@@ -4,6 +4,8 @@ A genetic algorithm in C++ that evolves a route through a walled maze. Fitness i
 on a hand-rolled thread pool in the native build. The same core also compiles to WebAssembly for the
 browser.
 
+[Run the solver in your browser](https://brettadams0.github.io/mazefinder/). Step through a generation and compare the best route with the breadth-first-search baseline.
+
 A genome is a fixed-length sequence of moves over `{UP, DOWN, LEFT, RIGHT, STAND}`. Each generation
 walks every genome from the top-left corner. A move into a wall or off the edge is blocked (the walker
 stays put), and the walk stops at the bottom-right goal. The population keeps its better half and
